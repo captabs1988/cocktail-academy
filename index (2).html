@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cocktail Academy</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: #080600;
+      color: #f0e8d0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .card {
+      max-width: 560px;
+      width: 100%;
+      border: 1px solid rgba(201,168,76,.28);
+      border-radius: 18px;
+      padding: 28px;
+      background: rgba(255,255,255,.04);
+      box-shadow: 0 20px 80px rgba(0,0,0,.35);
+    }
+    h1 { margin: 0 0 8px; color: #e8c97a; font-family: Georgia, serif; }
+    p { color: #b7a06a; line-height: 1.5; }
+    .buttons { display: grid; gap: 12px; margin-top: 22px; }
+    a {
+      display: block;
+      text-decoration: none;
+      text-align: center;
+      color: #e8c97a;
+      border: 1px solid #c9a84c;
+      background: rgba(201,168,76,.12);
+      padding: 14px 18px;
+      border-radius: 12px;
+      font-weight: 700;
+    }
+    a:hover { background: rgba(201,168,76,.2); }
+    .hint { font-size: 13px; color: #7a6840; margin-top: 18px; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Cocktail Academy</h1>
+    <p>Choose the version you want to open. Use the mobile version for iPhone-style layout, and the desktop version for wider screens.</p>
+    <div class="buttons">
+      <a href="cocktail-academy-mobile.html">Open Mobile Version</a>
+      <a href="cocktail-academy-desktop.html">Open Desktop Version</a>
+    </div>
+    <p class="hint">Upload this index.html plus both cocktail-academy HTML files to the same GitHub repository folder.</p>
+  </main>
+  <script>
+    // Optional convenience: add ?auto=1 to the URL to auto-open based on screen width.
+    const params = new URLSearchParams(location.search);
+    if (params.get('auto') === '1') {
+      location.href = window.innerWidth < 768 ? 'cocktail-academy-mobile.html' : 'cocktail-academy-desktop.html';
+    }
+  </script>
+</body>
+</html>

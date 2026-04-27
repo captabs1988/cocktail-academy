@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cocktail Academy Desktop</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body, #root { margin: 0; min-height: 100%; }
+    body { font-family: Arial, sans-serif; }
+    button, input, select, textarea { font-family: inherit; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" data-presets="env,react">
+const { useState, useEffect, useRef } = React;
+const ALL_INGREDIENTS = ["Absolut Vodka","Amaretto","Angostura Bitters","Aperol","Baileys Irish Cream","Bourbon","Brandy","Campari","Champagne","Cherry Liqueur","Coconut Cream","Cola","Cointreau","Cranberry Juice","Dark Rum","Dry Vermouth","Elderflower Cordial","Elderflower Liqueur","Fresh Espresso","Gin","Ginger Beer","Grenadine","Kahlua","Lemon Juice","Lime Juice","Mint Leaves","Orange Juice","Passion Fruit Purée","Passoa","Peach Schnapps","Pineapple Juice","Pomegranate Juice","Prosecco","Prosecco (side)","Raspberry Purée","Soda Water","Sugar Syrup","Sweet Vermouth","Tabasco","Tequila","Tonic Water","Tomato Juice","Triple Sec / Cointreau","Vanilla Syrup","Vanilla Vodka","Vodka","White Rum","Whisky","Worcestershire Sauce"].sort();
+const ALL_MEASURES = ["2–3 dashes","4 dashes","5ml","10ml","10–15ml","15ml","20ml","25ml","30ml","35ml","40ml","45ml","50ml","60ml","75ml","100ml","120ml","1 tsp","top up","float","squeeze","to taste","8–10 leaves"];
+const ALL_GLASSES = ["Champagne Flute","Collins Glass","Copper Mug","Coupe Glass","Coupe / Margarita Glass","Highball Glass","Highball / Collins Glass","Hurricane Glass","Martini Glass","Martini Glass + shot of Prosecco","Old Fashioned / Rocks Glass","Rocks / Old Fashioned Glass","Rocks Glass","Wine Glass"].sort();
+const ALL_GARNISHES = ["3 coffee beans","½ passion fruit on top","Celery stick","Cherry on stick","Cucumber slice","Lemon slice","Lemon twist","Lemon wedge","Lime slice","Lime wedge","Mint sprig","Mint + lime garnish","None","Olive on stick","Orange peel","Orange peel + orange slice","Orange slice","Pineapple slice","Pineapple slice + cherry","Raspberry","Salt rim + lime wedge","Sprig of rosemary","Sugar rim","Strawberry on rim"].sort();
+const ALL_EXTRAS = ["None","Muddle mint first","Muddle cucumber first","Salt rim","Sugar rim","Chilli salt rim","Dry shake first (no ice)","Double strain","Fine strain","Blend with ice","Serve over crushed ice","Serve over large ice cube","Serve over cubed ice","Flame orange peel","Refrigerate glass first","Celery salt rim","Layer (do not stir)"].sort();
+
+const RECIPES = [
+  {id:1,name:"Margarita",method:"shake",glass:"Coupe / Margarita Glass",ingredients:[{name:"Tequila",measure:"50ml"},{name:"Triple Sec / Cointreau",measure:"25ml"},{name:"Lime Juice",measure:"25ml"}],garnish:"Salt rim + lime wedge",extras:"Salt rim",notes:"Double strain. Salt rim optional."},
+  {id:2,name:"Cosmopolitan",method:"shake",glass:"Martini Glass",ingredients:[{name:"Vodka",measure:"40ml"},{name:"Triple Sec / Cointreau",measure:"20ml"},{name:"Lime Juice",measure:"10ml"},{name:"Cranberry Juice",measure:"30ml"}],garnish:"Orange peel",extras:"None",notes:"Shake hard. Strain into chilled glass."},
+  {id:3,name:"Pornstar Martini",method:"shake",glass:"Martini Glass + shot of Prosecco",ingredients:[{name:"Vanilla Vodka",measure:"50ml"},{name:"Passoa",measure:"15ml"},{name:"Lime Juice",measure:"15ml"},{name:"Passion Fruit Purée",measure:"30ml"},{name:"Vanilla Syrup",measure:"15ml"},{name:"Prosecco (side)",measure:"50ml"}],garnish:"½ passion fruit on top",extras:"None",notes:"Serve Prosecco in a shot glass on the side."},
+  {id:4,name:"Espresso Martini",method:"shake",glass:"Martini Glass",ingredients:[{name:"Vodka",measure:"40ml"},{name:"Kahlua",measure:"20ml"},{name:"Sugar Syrup",measure:"10ml"},{name:"Fresh Espresso",measure:"30ml"}],garnish:"3 coffee beans",extras:"Dry shake first (no ice)",notes:"Shake vigorously for a good foam head."},
+  {id:5,name:"Tom Collins",method:"shake",glass:"Highball / Collins Glass",ingredients:[{name:"Gin",measure:"50ml"},{name:"Lemon Juice",measure:"25ml"},{name:"Sugar Syrup",measure:"15ml"},{name:"Soda Water",measure:"top up"}],garnish:"Lemon slice",extras:"None",notes:"Shake first three, pour over ice, top with soda."},
+  {id:6,name:"Long Island Iced Tea",method:"shake",glass:"Highball Glass",ingredients:[{name:"Vodka",measure:"25ml"},{name:"Gin",measure:"25ml"},{name:"White Rum",measure:"25ml"},{name:"Tequila",measure:"25ml"},{name:"Triple Sec / Cointreau",measure:"25ml"},{name:"Lemon Juice",measure:"25ml"},{name:"Sugar Syrup",measure:"10–15ml"},{name:"Cola",measure:"top up"}],garnish:"Lemon wedge",extras:"None",notes:"Shake everything except cola. Top with cola."},
+  {id:7,name:"Old Fashioned",method:"stir",glass:"Rocks / Old Fashioned Glass",ingredients:[{name:"Bourbon",measure:"50ml"},{name:"Sugar Syrup",measure:"10ml"},{name:"Angostura Bitters",measure:"2–3 dashes"}],garnish:"Orange peel + orange slice",extras:"Serve over large ice cube",notes:"Stir with ice until well chilled."},
+  {id:8,name:"Negroni",method:"stir",glass:"Rocks / Old Fashioned Glass",ingredients:[{name:"Gin",measure:"25ml"},{name:"Campari",measure:"25ml"},{name:"Sweet Vermouth",measure:"25ml"}],garnish:"Orange peel",extras:"Serve over large ice cube",notes:"Equal parts. Stir until diluted."},
+  {id:9,name:"Moscow Mule",method:"build",glass:"Copper Mug",ingredients:[{name:"Vodka",measure:"50ml"},{name:"Lime Juice",measure:"25ml"},{name:"Ginger Beer",measure:"top up"}],garnish:"Lime wedge",extras:"Serve over cubed ice",notes:"Build directly in copper mug over ice."},
+  {id:10,name:"Mojito",method:"build",glass:"Highball Glass",ingredients:[{name:"White Rum",measure:"50ml"},{name:"Lime Juice",measure:"25ml"},{name:"Sugar Syrup",measure:"15ml"},{name:"Soda Water",measure:"top up"}],garnish:"Mint + lime garnish",extras:"Muddle mint first",notes:"Muddle 8-10 mint leaves first."},
+  {id:11,name:"Aperol Spritz",method:"build",glass:"Wine Glass",ingredients:[{name:"Aperol",measure:"50ml"},{name:"Prosecco",measure:"75ml"},{name:"Soda Water",measure:"25ml"}],garnish:"Orange slice",extras:"Serve over cubed ice",notes:"Pour Prosecco first, then Aperol, then soda."},
+  {id:12,name:"Gin & Tonic",method:"build",glass:"Highball Glass",ingredients:[{name:"Gin",measure:"50ml"},{name:"Tonic Water",measure:"top up"}],garnish:"Lemon slice",extras:"Serve over cubed ice",notes:"Pour gin over ice, top with tonic."},
+  {id:13,name:"Whisky Sour",method:"shake",glass:"Rocks / Old Fashioned Glass",ingredients:[{name:"Whisky",measure:"50ml"},{name:"Lemon Juice",measure:"25ml"},{name:"Sugar Syrup",measure:"15ml"}],garnish:"Lemon slice",extras:"Dry shake first (no ice)",notes:"Dry shake first for foam, then shake with ice."},
+  {id:14,name:"Daiquiri",method:"shake",glass:"Coupe Glass",ingredients:[{name:"White Rum",measure:"50ml"},{name:"Lime Juice",measure:"25ml"},{name:"Sugar Syrup",measure:"15ml"}],garnish:"Lime wedge",extras:"Double strain",notes:"Classic shaken sour. Always double strain."},
+  {id:15,name:"Dry Martini",method:"stir",glass:"Martini Glass",ingredients:[{name:"Gin",measure:"60ml"},{name:"Dry Vermouth",measure:"10ml"}],garnish:"Lemon twist",extras:"Refrigerate glass first",notes:"Stir over ice. Strain into frozen glass."},
+  {id:16,name:"Manhattan",method:"stir",glass:"Coupe Glass",ingredients:[{name:"Bourbon",measure:"50ml"},{name:"Sweet Vermouth",measure:"25ml"},{name:"Angostura Bitters",measure:"2–3 dashes"}],garnish:"Cherry on stick",extras:"Serve over large ice cube",notes:"Stir well. Strain into coupe or over ice."},
+  {id:17,name:"Bramble",method:"shake",glass:"Rocks / Old Fashioned Glass",ingredients:[{name:"Gin",measure:"50ml"},{name:"Lemon Juice",measure:"25ml"},{name:"Sugar Syrup",measure:"15ml"},{name:"Cointreau",measure:"10ml"}],garnish:"Lemon slice + raspberry",extras:"Serve over crushed ice",notes:"Float blackberry liqueur over the top."},
+  {id:18,name:"Amaretto Sour",method:"shake",glass:"Rocks / Old Fashioned Glass",ingredients:[{name:"Amaretto",measure:"50ml"},{name:"Lemon Juice",measure:"25ml"},{name:"Sugar Syrup",measure:"10ml"}],garnish:"Cherry on stick",extras:"Dry shake first (no ice)",notes:"Dry shake for foam. Double strain over ice."},
+  {id:19,name:"Clover Club",method:"shake",glass:"Coupe Glass",ingredients:[{name:"Gin",measure:"40ml"},{name:"Lemon Juice",measure:"20ml"},{name:"Raspberry Purée",measure:"20ml"},{name:"Sugar Syrup",measure:"10ml"}],garnish:"Raspberry",extras:"Dry shake first (no ice)",notes:"Dry shake for foam, then shake with ice."},
+  {id:20,name:"Bellini",method:"build",glass:"Champagne Flute",ingredients:[{name:"Prosecco",measure:"75ml"},{name:"Peach Schnapps",measure:"25ml"}],garnish:"None",extras:"None",notes:"Serve very cold. Classic brunch cocktail."},
+];
+
+const MC = {
+  shake: {bg:"rgba(224,112,112,0.15)",border:"#E07070",color:"#F08080",icon:"🍸"},
+  stir:  {bg:"rgba(144,168,232,0.15)",border:"#90A8E8",color:"#90A8E8",icon:"🥄"},
+  build: {bg:"rgba(212,168,64,0.15)", border:"#D4A840",color:"#D4A840",icon:"⚡"},
+};
+const ROWS = 10;
+const sv = (k,v) => { try{localStorage.setItem(k,JSON.stringify(v))}catch{} };
+const ld = (k,d) => { try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d} };
+const shuf = a => [...a].sort(()=>Math.random()-0.5);
+const calcBonus = s => Math.max(0,Math.round((1-Math.min(s,90)/90)*20));
+
+// ─── THEMES ──────────────────────────────────────────────────────────────────
+const THEMES = {
+  gold: {
+    name:"Gold (Default)",
+    pageBg:"#080600", sidebarBg:"#0c0a05", mainBg:"#080600",
+    cardBg:"rgba(255,255,255,0.03)", cardBorder:"rgba(255,255,255,0.07)",
+    text:"#F0E8D0", textMuted:"#7a6840", textDim:"#5a4820", textDimmer:"#3a2810",
+    accent:"#C9A84C", accentLight:"#E8C97A",
+    inputBg:"rgba(255,255,255,0.06)", inputBorder:"rgba(255,255,255,0.12)",
+    btnOptBg:"rgba(255,255,255,0.04)", btnOptBorder:"rgba(255,255,255,0.09)",
+    correctBg:"rgba(126,203,114,0.12)", correctBorder:"#7ECB72", correctText:"#7ECB72",
+    wrongBg:"rgba(224,112,112,0.12)", wrongBorder:"#E07070", wrongText:"#E07070",
+    scoreBg:"rgba(201,168,76,0.06)", scoreBorder:"rgba(201,168,76,0.2)",
+    navActiveBg:"rgba(201,168,76,0.07)",
+  },
+  bright: {
+    name:"Bright Student",
+    pageBg:"#f0f4ff", sidebarBg:"#ffffff", mainBg:"#f0f4ff",
+    cardBg:"#ffffff", cardBorder:"#dde3f5",
+    text:"#1a1a2e", textMuted:"#5a5a8a", textDim:"#8888aa", textDimmer:"#aaaacc",
+    accent:"#6c47ff", accentLight:"#4a90d9",
+    inputBg:"#ffffff", inputBorder:"#c0c8e8",
+    btnOptBg:"#f5f0ff", btnOptBorder:"#c0b0ff",
+    correctBg:"#e6fbe8", correctBorder:"#2ecc71", correctText:"#1a8a3a",
+    wrongBg:"#ffeaea", wrongBorder:"#e74c3c", wrongText:"#b51a1a",
+    scoreBg:"#f0edff", scoreBorder:"#b8a8ff",
+    navActiveBg:"#ede8ff",
+  },
+  dark: {
+    name:"Dark Mode",
+    pageBg:"#0a0a0a", sidebarBg:"#111111", mainBg:"#0a0a0a",
+    cardBg:"#1a1a1a", cardBorder:"#2e2e2e",
+    text:"#e8e8e8", textMuted:"#888888", textDim:"#555555", textDimmer:"#333333",
+    accent:"#00bcd4", accentLight:"#00e5ff",
+    inputBg:"#1e1e1e", inputBorder:"#333333",
+    btnOptBg:"#1e1e1e", btnOptBorder:"#333333",
+    correctBg:"rgba(0,200,100,0.15)", correctBorder:"#00c864", correctText:"#00c864",
+    wrongBg:"rgba(255,60,60,0.15)", wrongBorder:"#ff3c3c", wrongText:"#ff3c3c",
+    scoreBg:"rgba(0,188,212,0.08)", scoreBorder:"rgba(0,188,212,0.3)",
+    navActiveBg:"rgba(0,188,212,0.1)",
+  },
+};
+
+// ─── STYLES ───────────────────────────────────────────────────────────────────
+// C is now a function of current theme, populated at render time via useTheme()
+// For components that use C directly we keep a mutable ref; see useTheme hook.
+let C = {};
+function makeC(t) {
+  return {
+    page:    {display:"flex",minHeight:"100vh",background:t.pageBg,color:t.text,fontFamily:"Arial,sans-serif"},
+    sidebar: {width:240,background:t.sidebarBg,borderRight:`1px solid ${t.cardBorder}`,display:"flex",flexDirection:"column",height:"100vh",position:"sticky",top:0,overflowY:"auto",flexShrink:0},
+    main:    {flex:1,overflowY:"auto",minHeight:"100vh",background:t.mainBg},
+    panel:   {padding:"28px 36px",maxWidth:1000},
+    row:     {display:"flex",alignItems:"center",gap:10},
+    gold:    t.accent, goldl:t.accentLight, muted:t.textMuted, dim:t.textDim, dimmer:t.textDimmer,
+    card:    {background:t.cardBg,border:`1px solid ${t.cardBorder}`,borderRadius:10,padding:"16px 18px"},
+    t,
+  };
+}
+
+const btn = (color, size="md") => ({
+  padding: size==="sm"?"5px 12px":size==="lg"?"13px 22px":"9px 16px",
+  fontSize: size==="sm"?11:size==="lg"?15:13,
+  fontWeight:"bold", cursor:"pointer", borderRadius:8,
+  border:`1px solid ${color}`,
+  background:`${color}22`, color,
+  transition:"all 0.15s",
+});
+
+// ─── MAIN APP ─────────────────────────────────────────────────────────────────
+function App() {
+  const [theme, setTheme] = useState(()=>ld("dk2_theme","gold"));
+  // Sync C global on every render
+  C = makeC(THEMES[theme]||THEMES.gold);
+  const [screen,    setScreen]    = useState("home");
+  const [recipes,   setRecipes]   = useState(()=>ld("dk2_r",RECIPES));
+  const [progress,  setProgress]  = useState(()=>ld("dk2_p",{}));
+  const [sel,       setSel]       = useState([]);
+  const [quizState, setQuizState] = useState(null);
+  const [bldState,  setBldState]  = useState(null);
+  const [flashIdx,  setFlashIdx]  = useState(0);
+  const [result,    setResult]    = useState(null);
+  const [addForm,   setAddForm]   = useState(null);
+  const [toast,     setToast]     = useState("");
+
+  useEffect(()=>sv("dk2_r",recipes),[recipes]);
+  useEffect(()=>sv("dk2_p",progress),[progress]);
+  useEffect(()=>sv("dk2_theme",theme),[theme]);
+
+  const showToast = msg => { setToast(msg); setTimeout(()=>setToast(""),2200); };
+  const mastery   = id  => { const p=progress[id]; return p&&p.seen?Math.round((p.correct/p.seen)*100):0; };
+
+  const updProg = (id,correct) => setProgress(p=>{
+    const c=p[id]||{seen:0,correct:0,wrong:0,bestSecs:null};
+    return{...p,[id]:{...c,seen:c.seen+1,correct:c.correct+(correct?1:0),wrong:c.wrong+(correct?0:1)}};
+  });
+  const recTime = (id,secs) => setProgress(p=>{
+    const c=p[id]||{seen:0,correct:0,wrong:0,bestSecs:null};
+    return{...p,[id]:{...c,bestSecs:c.bestSecs===null?secs:Math.min(c.bestSecs,secs)}};
+  });
+
+  // ── MCQ ──
+  const buildQ = r => {
+    const t=["ing","meas","meth"][Math.floor(Math.random()*3)];
+    if(t==="ing"){
+      const ok=r.ingredients[Math.floor(Math.random()*r.ingredients.length)].name;
+      const bad=shuf(ALL_INGREDIENTS.filter(n=>!r.ingredients.map(i=>i.name).includes(n))).slice(0,3);
+      return{r,q:`Which ingredient IS in a ${r.name}?`,opts:shuf([ok,...bad]),ans:ok};
+    }
+    if(t==="meas"){
+      const ing=r.ingredients[Math.floor(Math.random()*r.ingredients.length)];
+      const bad=shuf(ALL_MEASURES.filter(m=>m!==ing.measure)).slice(0,3);
+      return{r,q:`How much ${ing.name} in a ${r.name}?`,opts:shuf([ing.measure,...bad]),ans:ing.measure};
+    }
+    return{r,q:`What method for ${r.name}?`,opts:shuf(["shake","stir","build"]),ans:r.method};
+  };
+
+  const startQuiz = () => {
+    const picked=recipes.filter(r=>sel.includes(r.id));
+    if(picked.length<2){showToast("Select 2+ recipes");return;}
+    setQuizState({qs:shuf(picked).map(buildQ),idx:0,answers:[],score:0});
+    setScreen("quiz");
+  };
+
+  const answerQuiz = ans => {
+    const q=quizState.qs[quizState.idx]; const ok=ans===q.ans;
+    updProg(q.r.id,ok);
+    const newA=[...quizState.answers,{q,chosen:ans,ok}];
+    const newS=quizState.score+(ok?1:0);
+    if(quizState.idx+1>=quizState.qs.length){setResult({answers:newA,score:newS,total:quizState.qs.length,mode:"quiz"});setScreen("result");}
+    else setQuizState({...quizState,idx:quizState.idx+1,answers:newA,score:newS});
+  };
+
+  // ── BUILDER ──
+  const startBuilder = () => {
+    setScreen("builderSelect");
+  };
+  const launchBuilder = (ids) => {
+    const picked=recipes.filter(r=>ids.includes(r.id));
+    if(!picked.length){showToast("Select 1+ recipe");return;}
+    setBldState({queue:shuf(picked),idx:0,results:[],total:0});
+    setScreen("builder");
+  };
+
+  const submitBuilder = res => {
+    recTime(res.recipe.id,res.secs); updProg(res.recipe.id,res.pct>=50);
+    const newR=[...bldState.results,res];
+    const newT=bldState.total+res.score;
+    if(bldState.idx+1>=bldState.queue.length){setResult({results:newR,totalScore:newT,mode:"builder"});setScreen("result");}
+    else setBldState({...bldState,idx:bldState.idx+1,results:newR,total:newT});
+  };
+
+  const delRecipe  = id => { setRecipes(r=>r.filter(x=>x.id!==id)); setProgress(p=>{const n={...p};delete n[id];return n;}); showToast("Deleted"); };
+  const saveNew    = () => { if(!addForm.name){showToast("Need a name");return;} setRecipes(r=>[...r,{...addForm,id:Date.now()}]); setAddForm(null); showToast("Added!"); };
+
+  const totalMastery = recipes.length ? Math.round(recipes.reduce((s,r)=>s+mastery(r.id),0)/recipes.length) : 0;
+  const byM = { shake:recipes.filter(r=>r.method==="shake"), stir:recipes.filter(r=>r.method==="stir"), build:recipes.filter(r=>r.method==="build") };
+
+  const navGo = id => {
+    if(id==="builder") setScreen("builderSelect");
+    else if(id==="quiz") startQuiz();
+    else { setScreen(id); }
+  };
+
+  return (
+    <div style={C.page}>
+      {toast && <Toast msg={toast}/>}
+
+      {/* ── SIDEBAR ── */}
+      <div style={C.sidebar}>
+        {/* Logo */}
+        <div style={{padding:"20px 18px 14px",borderBottom:"1px solid rgba(201,168,76,0.12)"}}>
+          <div style={{fontSize:17,fontFamily:"Georgia,serif",color:C.goldl,fontWeight:"bold"}}>Cocktail Academy</div>
+          <div style={{fontSize:9,color:C.dimmer,letterSpacing:3,textTransform:"uppercase",marginTop:2}}>Desktop Edition</div>
+        </div>
+
+        {/* Mastery */}
+        <div style={{padding:"12px 18px",borderBottom:"1px solid rgba(201,168,76,0.1)"}}>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:C.muted,marginBottom:5}}>
+            <span>Overall mastery</span><span style={{color:C.goldl,fontWeight:"bold"}}>{totalMastery}%</span>
+          </div>
+          <div style={{height:4,background:"rgba(255,255,255,0.07)",borderRadius:2,overflow:"hidden"}}>
+            <div style={{height:"100%",width:`${totalMastery}%`,background:"linear-gradient(90deg,#C9A84C,#E8C97A)",borderRadius:2}}/>
+          </div>
+        </div>
+
+        {/* Nav */}
+        <div style={{padding:"8px 0"}}>
+          {[{id:"home",label:"Overview"},{id:"flashcard",label:"🃏 Flashcards"},{id:"builder",label:"⏱ Builder Exam"},{id:"quiz",label:"🎯 MCQ Exam"},{id:"manage",label:"⚙️ Manage"}].map(n=>(
+            <button key={n.id} onClick={()=>navGo(n.id)} style={{
+              display:"block",width:"100%",textAlign:"left",padding:"9px 20px",
+              fontSize:13,fontWeight:"bold",cursor:"pointer",background:"none",border:"none",
+              borderLeft:`2px solid ${(screen===n.id||(n.id==="builder"&&screen==="builderSelect"))?C.t.accent:"transparent"}`,
+              color:(screen===n.id||(n.id==="builder"&&screen==="builderSelect"))?C.t.accentLight:C.t.textMuted,
+              background:(screen===n.id||(n.id==="builder"&&screen==="builderSelect"))?C.t.navActiveBg:"none",
+            }}>{n.label}</button>
+          ))}
+        </div>
+
+        {/* Recipe selector */}
+        <div style={{flex:1,padding:"8px 14px 16px",borderTop:"1px solid rgba(201,168,76,0.1)",marginTop:8,overflowY:"auto"}}>
+          <div style={{fontSize:9,color:C.dimmer,letterSpacing:3,textTransform:"uppercase",marginBottom:7}}>Select for exams</div>
+          <div style={{display:"flex",gap:6,marginBottom:9}}>
+            <button style={{...btn("#C9A84C","sm")}} onClick={()=>setSel(recipes.map(r=>r.id))}>All</button>
+            <button style={{...btn("#5a4820","sm")}} onClick={()=>setSel([])}>None</button>
+            <span style={{fontSize:10,color:C.dimmer,alignSelf:"center",marginLeft:"auto"}}>{sel.length} sel.</span>
+          </div>
+          {["shake","stir","build"].map(m=>(
+            <div key={m} style={{marginBottom:10}}>
+              <div style={{fontSize:9,color:MC[m].color,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>{MC[m].icon} {m}</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                {byM[m].map(r=>{
+                  const s=sel.includes(r.id), p=progress[r.id];
+                  return (
+                    <button key={r.id} onClick={()=>setSel(x=>x.includes(r.id)?x.filter(i=>i!==r.id):[...x,r.id])} style={{
+                      padding:"3px 7px",borderRadius:4,fontSize:10,fontWeight:"bold",cursor:"pointer",
+                      background:s?MC[m].bg:"rgba(255,255,255,0.03)",
+                      border:`1px solid ${s?MC[m].border:"rgba(255,255,255,0.07)"}`,
+                      color:s?MC[m].color:C.dimmer,
+                    }}>
+                      {r.name.split(" ").slice(0,2).join(" ")}
+                      {p?.bestSecs!=null&&<span style={{marginLeft:3,fontSize:8,opacity:0.7}}>{p.bestSecs}s</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── MAIN ── */}
+      <div style={C.main}>
+        {/* Theme selector bar */}
+        <div style={{display:"flex",gap:8,padding:"12px 24px",borderBottom:`1px solid ${C.t.cardBorder}`,background:C.t.sidebarBg,alignItems:"center"}}>
+          <span style={{fontSize:11,color:C.t.textMuted,marginRight:4}}>Theme:</span>
+          {Object.entries(THEMES).map(([k,t])=>(
+            <button key={k} onClick={()=>setTheme(k)} style={{
+              padding:"4px 12px",borderRadius:6,fontSize:11,fontWeight:"bold",cursor:"pointer",
+              background:theme===k?C.t.accent+"33":C.t.btnOptBg,
+              border:`1px solid ${theme===k?C.t.accent:C.t.btnOptBorder}`,
+              color:theme===k?C.t.accent:C.t.textMuted,
+            }}>{t.name}</button>
+          ))}
+        </div>
+        {screen==="home"         && <HomeScreen    recipes={recipes} progress={progress} mastery={mastery} totalMastery={totalMastery} setScreen={setScreen} startBuilder={startBuilder} startQuiz={startQuiz} sel={sel}/>}
+        {screen==="flashcard"    && <FlashScreen   recipes={recipes} flashIdx={flashIdx} setFlashIdx={setFlashIdx} mastery={mastery} updProg={updProg} progress={progress}/>}
+        {screen==="builderSelect"&& <BuilderSelectScreen recipes={recipes} progress={progress} mastery={mastery} launchBuilder={launchBuilder} setScreen={setScreen}/>}
+        {screen==="builder"      && bldState && <BuilderScreen bldState={bldState} submitBuilder={submitBuilder} setScreen={setScreen} progress={progress}/>}
+        {screen==="quiz"         && quizState && <QuizScreen   quizState={quizState} answerQuiz={answerQuiz} setScreen={setScreen}/>}
+        {screen==="result"       && result    && <ResultScreen result={result} setScreen={setScreen}/>}
+        {screen==="manage"       && <ManageScreen  recipes={recipes} delRecipe={delRecipe} addForm={addForm} setAddForm={setAddForm} saveNew={saveNew} progress={progress} mastery={mastery}/>}
+      </div>
+    </div>
+  );
+}
+
+// ─── HOME ─────────────────────────────────────────────────────────────────────
+function HomeScreen({recipes,progress,mastery,totalMastery,setScreen,startBuilder,startQuiz,sel}) {
+  const seen    = Object.values(progress).reduce((s,p)=>s+(p.seen||0),0);
+  const correct = Object.values(progress).reduce((s,p)=>s+(p.correct||0),0);
+  const times   = Object.values(progress).filter(p=>p.bestSecs!=null).map(p=>p.bestSecs);
+  const avgTime = times.length?Math.round(times.reduce((a,b)=>a+b,0)/times.length):null;
+
+  return (
+    <div style={C.panel}>
+      <div style={{fontSize:22,fontFamily:"Georgia,serif",color:C.goldl,fontWeight:"bold",marginBottom:3}}>Overview</div>
+      <div style={{fontSize:10,color:C.dimmer,letterSpacing:3,textTransform:"uppercase",marginBottom:20}}>Training Dashboard</div>
+
+      {/* Stats */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:24}}>
+        {[
+          {label:"Overall Mastery",val:`${totalMastery}%`,color:C.gold},
+          {label:"Recipes",val:recipes.length,color:C.goldl},
+          {label:"Correct Answers",val:correct,color:"#7ECB72"},
+          {label:"Avg Best Time",val:avgTime?`${avgTime}s`:"—",color:"#D4A840"},
+        ].map(s=>(
+          <div key={s.label} style={{...C.card,textAlign:"center"}}>
+            <div style={{fontSize:26,fontWeight:"bold",color:s.color}}>{s.val}</div>
+            <div style={{fontSize:10,color:C.dimmer,textTransform:"uppercase",letterSpacing:1,marginTop:4}}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Actions */}
+      <div style={{display:"flex",gap:10,marginBottom:24}}>
+        <button style={{...btn("#D4A840","lg")}} onClick={startBuilder}>⏱ Builder Exam ({sel.length})</button>
+        <button style={{...btn("#90A8E8","lg")}} onClick={startQuiz}>🎯 MCQ Exam</button>
+        <button style={{...btn("#F08080","lg")}} onClick={()=>setScreen("flashcard")}>🃏 Flashcards</button>
+      </div>
+
+      {/* Table */}
+      <table style={{width:"100%",borderCollapse:"collapse"}}>
+        <thead>
+          <tr>{["Recipe","Method","Mastery","Progress","Best Time","✓ / Seen"].map(h=>(
+            <th key={h} style={{fontSize:10,color:C.dimmer,textTransform:"uppercase",letterSpacing:2,padding:"6px 10px",borderBottom:"1px solid rgba(201,168,76,0.2)",textAlign:"left"}}>{h}</th>
+          ))}</tr>
+        </thead>
+        <tbody>
+          {recipes.map(r=>{
+            const m=mastery(r.id), p=progress[r.id]||{}, mc=MC[r.method];
+            return (
+              <tr key={r.id} style={{borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
+                <td style={{padding:"8px 10px",fontSize:13,color:C.goldl,fontWeight:"bold"}}>{r.name}</td>
+                <td style={{padding:"8px 10px"}}>
+                  <span style={{fontSize:10,padding:"3px 8px",borderRadius:4,fontWeight:"bold",background:mc.bg,color:mc.color,border:`1px solid ${mc.border}`}}>{r.method}</span>
+                </td>
+                <td style={{padding:"8px 10px",fontSize:13,fontWeight:"bold",color:m>70?"#7ECB72":m>40?"#C9A84C":"#E07070"}}>{m}%</td>
+                <td style={{padding:"8px 10px",minWidth:80}}>
+                  <div style={{height:4,background:"rgba(255,255,255,0.07)",borderRadius:2,overflow:"hidden"}}>
+                    <div style={{height:"100%",width:`${m}%`,background:m>70?"#7ECB72":m>40?"#C9A84C":"#E07070",borderRadius:2}}/>
+                  </div>
+                </td>
+                <td style={{padding:"8px 10px",fontSize:13,color:"#D4A840",fontWeight:"bold"}}>{p.bestSecs!=null?`${p.bestSecs}s`:"—"}</td>
+                <td style={{padding:"8px 10px",fontSize:12,color:C.muted}}>{p.correct||0} / {p.seen||0}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ─── FLASHCARD ────────────────────────────────────────────────────────────────
+function FlashScreen({recipes,flashIdx,setFlashIdx,mastery,updProg,progress}) {
+  const r = recipes[flashIdx];
+  const [rev,setRev] = useState({});
+  useEffect(()=>setRev({}),[flashIdx]);
+  const reveal = i => setRev(x=>({...x,[i]:true}));
+  const allRev = r.ingredients.every((_,i)=>rev[i]);
+  const next   = ok => { updProg(r.id,ok); setFlashIdx(i=>(i+1)%recipes.length); };
+  const mc=MC[r.method], m=mastery(r.id), best=progress[r.id]?.bestSecs;
+
+  return (
+    <div style={C.panel}>
+      <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:20}}>
+        <div>
+          <div style={{fontSize:22,fontFamily:"Georgia,serif",color:C.goldl,fontWeight:"bold"}}>Flashcards</div>
+          <div style={{fontSize:10,color:C.dimmer,letterSpacing:2,textTransform:"uppercase"}}>{flashIdx+1} of {recipes.length}</div>
+        </div>
+        <div style={{marginLeft:"auto",textAlign:"right"}}>
+          <div style={{fontSize:15,fontWeight:"bold",color:m>70?"#7ECB72":m>40?"#C9A84C":"#E07070"}}>{m}% mastery</div>
+          {best!=null&&<div style={{fontSize:11,color:"#D4A840"}}>Best: {best}s</div>}
+        </div>
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"1fr 300px",gap:20,alignItems:"start"}}>
+        <div style={C.card}>
+          {/* badges */}
+          <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
+            <span style={{fontSize:11,padding:"3px 10px",borderRadius:4,fontWeight:"bold",background:mc.bg,color:mc.color,border:`1px solid ${mc.border}`}}>{mc.icon} {r.method.toUpperCase()}</span>
+            <span style={{fontSize:11,padding:"3px 10px",borderRadius:4,fontWeight:"bold",background:"rgba(201,168,76,0.08)",color:C.gold,border:"1px solid rgba(201,168,76,0.25)"}}>{r.glass}</span>
+          </div>
+
+          <div style={{fontSize:26,fontFamily:"Georgia,serif",color:C.goldl,fontWeight:"bold",marginBottom:6}}>{r.name}</div>
+          <div style={{fontSize:11,color:C.dimmer,marginBottom:14}}>Click each ingredient to reveal its measure</div>
+
+          {r.ingredients.map((ing,i)=>(
+            <div key={i} onClick={()=>reveal(i)} style={{
+              display:"flex",justifyContent:"space-between",alignItems:"center",
+              padding:"10px 14px",marginBottom:6,borderRadius:8,cursor:"pointer",
+              background:rev[i]?"rgba(201,168,76,0.08)":"rgba(255,255,255,0.03)",
+              border:`1px solid ${rev[i]?"rgba(201,168,76,0.25)":"rgba(255,255,255,0.06)"}`,
+              transition:"all 0.15s",
+            }}>
+              <span style={{fontSize:15,fontWeight:"bold",color:rev[i]?"#F0E8D0":C.dimmer}}>{ing.name}</span>
+              {rev[i]
+                ? <span style={{fontSize:15,fontWeight:"bold",color:C.gold}}>{ing.measure}</span>
+                : <span style={{fontSize:13,color:C.dimmer,background:"rgba(255,255,255,0.04)",padding:"1px 10px",borderRadius:4}}>???</span>
+              }
+            </div>
+          ))}
+
+          {!allRev && (
+            <button style={{...btn(C.gold),width:"100%",marginTop:10}} onClick={()=>r.ingredients.forEach((_,i)=>reveal(i))}>Reveal All</button>
+          )}
+
+          {allRev && (
+            <div style={{display:"flex",gap:10,marginTop:14}}>
+              <button style={{...btn("#F08080"),flex:1,padding:"12px"}} onClick={()=>next(false)}>✗ Not yet</button>
+              <button style={{...btn("#7ECB72"),flex:1,padding:"12px"}} onClick={()=>next(true)}>✓ Got it!</button>
+            </div>
+          )}
+        </div>
+
+        {/* Side info */}
+        <div>
+          {allRev && (
+            <>
+              <div style={{...C.card,marginBottom:10}}>
+                <div style={{fontSize:9,color:C.muted,letterSpacing:2,textTransform:"uppercase",marginBottom:5}}>Garnish</div>
+                <div style={{fontSize:14,color:C.gold}}>{r.garnish}</div>
+              </div>
+              {r.extras&&r.extras!=="None"&&(
+                <div style={{...C.card,marginBottom:10,border:"1px solid rgba(212,168,64,0.2)"}}>
+                  <div style={{fontSize:9,color:C.muted,letterSpacing:2,textTransform:"uppercase",marginBottom:5}}>Special Prep</div>
+                  <div style={{fontSize:14,color:"#D4A840"}}>{r.extras}</div>
+                </div>
+              )}
+              {r.notes&&(
+                <div style={{...C.card,border:"1px solid rgba(255,255,255,0.05)"}}>
+                  <div style={{fontSize:9,color:C.muted,letterSpacing:2,textTransform:"uppercase",marginBottom:5}}>Pro Tip</div>
+                  <div style={{fontSize:13,color:"#A89070",fontStyle:"italic"}}>{r.notes}</div>
+                </div>
+              )}
+            </>
+          )}
+
+          <div style={{display:"flex",gap:10,marginTop:allRev?10:0}}>
+            <button style={{...btn(C.muted),flex:1}} onClick={()=>setFlashIdx(i=>(i-1+recipes.length)%recipes.length)}>← Prev</button>
+            <button style={{...btn(C.muted),flex:1}} onClick={()=>setFlashIdx(i=>(i+1)%recipes.length)}>Next →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── GRID PICKER ──────────────────────────────────────────────────────────────
+function GridPicker({open,onClose,title,step,items,cols,isMeasure,onPick,onBack}) {
+  if(!open) return null;
+  const [search, setSearch] = useState("");
+  useEffect(()=>setSearch(""),[open]);
+  const filtered = items.filter(x=>x.toLowerCase().includes(search.toLowerCase()));
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.65)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div style={{background:C.t.cardBg,border:`1px solid ${C.t.accent}55`,borderRadius:14,padding:20,width:600,maxHeight:"75vh",display:"flex",flexDirection:"column",boxShadow:"0 20px 60px rgba(0,0,0,0.7)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,flexShrink:0}}>
+          {onBack&&<button style={{...btn(C.gold,"sm")}} onClick={onBack}>← Back</button>}
+          <div style={{flex:1}}>
+            <div style={{fontSize:9,color:C.muted,letterSpacing:2,textTransform:"uppercase"}}>{step}</div>
+            <div style={{fontSize:15,color:C.goldl,fontWeight:"bold",marginTop:1}}>{title}</div>
+          </div>
+          <button onClick={onClose} style={{background:"none",border:"none",color:C.muted,fontSize:20,cursor:"pointer",padding:0,lineHeight:1}}>✕</button>
+        </div>
+        {/* Search bar */}
+        <input
+          autoFocus
+          value={search}
+          onChange={e=>setSearch(e.target.value)}
+          placeholder="Search…"
+          style={{width:"100%",padding:"8px 14px",borderRadius:8,border:`1px solid ${C.t.inputBorder}`,background:C.t.inputBg,color:C.t.text,fontSize:14,outline:"none",marginBottom:10,flexShrink:0}}
+        />
+        <div style={{overflowY:"auto",flex:1}}>
+          <div style={{display:"grid",gridTemplateColumns:`repeat(${cols},1fr)`,gap:8}}>
+            {filtered.map((item,i)=>(
+              <button key={i} onClick={()=>onPick(item)} style={{
+                padding:isMeasure?"14px 6px":"10px 8px",borderRadius:9,
+                background:C.t.btnOptBg,border:`1px solid ${C.t.btnOptBorder}`,
+                color:C.t.text,fontSize:isMeasure?17:13,fontWeight:isMeasure?"bold":"500",
+                cursor:"pointer",textAlign:"center",lineHeight:1.3,
+                minHeight:isMeasure?52:44,
+              }}
+              onMouseEnter={e=>{e.currentTarget.style.background=C.t.accent+"33";e.currentTarget.style.borderColor=C.t.accent;e.currentTarget.style.color=C.t.accentLight;}}
+              onMouseLeave={e=>{e.currentTarget.style.background=C.t.btnOptBg;e.currentTarget.style.borderColor=C.t.btnOptBorder;e.currentTarget.style.color=C.t.text;}}
+              >{item}</button>
+            ))}
+            {filtered.length===0&&<div style={{gridColumn:"1/-1",padding:"20px",textAlign:"center",color:C.t.textMuted,fontSize:13}}>No matches</div>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── BUILDER ──────────────────────────────────────────────────────────────────
+function BuilderScreen({bldState,submitBuilder,setScreen,progress}) {
+  const recipe  = bldState.queue[bldState.idx];
+  const total   = bldState.queue.length;
+  const idx     = bldState.idx;
+  const prevBest= progress[recipe.id]?.bestSecs??null;
+
+  const emptyRows = ()=>Array(ROWS).fill(null).map(()=>({ingredient:"",measure:""}));
+  const [rows,   setRows]   = useState(emptyRows);
+  const [glass,  setGlass]  = useState("");
+  const [method, setMethod] = useState("");
+  const [garnish,setGarnish]= useState("");
+  const [extras, setExtras] = useState("");
+  const [subm,   setSubm]   = useState(false);
+  const [elapsed,setElapsed]= useState(0);
+  const [score,  setScore]  = useState(null);
+  const [picker, setPicker] = useState(null); // {type,rowIdx?,panel:"ing"|"meas"|"single",ing?}
+  const timerRef=useRef(null), startRef=useRef(Date.now());
+
+  useEffect(()=>{
+    setRows(emptyRows());setGlass("");setMethod("");setGarnish("");setExtras("");
+    setSubm(false);setElapsed(0);setScore(null);setPicker(null);
+    startRef.current=Date.now();
+    timerRef.current=setInterval(()=>setElapsed(Math.floor((Date.now()-startRef.current)/1000)),500);
+    return()=>clearInterval(timerRef.current);
+  },[idx]);
+
+  const openRow    = i => { if(!subm) setPicker({type:"row",rowIdx:i,panel:"ing",ing:""}); };
+  const openSingle = t => { if(!subm) setPicker({type:t,panel:"single"}); };
+
+  const handleIng  = v => setPicker(p=>({...p,panel:"meas",ing:v}));
+  const handleMeas = v => {
+    const n=[...rows]; n[picker.rowIdx]={ingredient:picker.ing,measure:v}; setRows(n); setPicker(null);
+  };
+  const handleSingle = v => {
+    if(picker.type==="glass")setGlass(v);
+    else if(picker.type==="garnish")setGarnish(v);
+    else setExtras(v);
+    setPicker(null);
+  };
+
+  const submit = () => {
+    clearInterval(timerRef.current);
+    const secs=Math.floor((Date.now()-startRef.current)/1000);
+    setElapsed(secs); setSubm(true);
+    let ingPts=0;
+    recipe.ingredients.forEach(ing=>{
+      const mr=rows.find(r=>r.ingredient===ing.name);
+      if(mr){ingPts++;if(mr.measure===ing.measure)ingPts++;}
+    });
+    const iT=recipe.ingredients.length*2;
+    const gP=glass===recipe.glass?1:0, mP=method===recipe.method?1:0;
+    const gaP=garnish===recipe.garnish?1:0, eP=extras===recipe.extras?1:0;
+    const raw=ingPts+gP+mP+gaP+eP, max=iT+4;
+    const pct=Math.round((raw/max)*100);
+    const tb=calcBonus(secs), sc=Math.round((pct/100)*20)+tb;
+    const sd={ingPts,ingTotal:iT,glassPts:gP,methodPts:mP,garnishPts:gaP,extrasPts:eP,pct,timeBonus:tb,score:sc,secs};
+    setScore(sd);
+    submitBuilder({recipe,rows,glass,method,garnish,extras,...sd});
+  };
+
+  const tc=elapsed<30?"#7ECB72":elapsed<60?"#C9A84C":"#E07070";
+
+  return (
+    <div style={C.panel}>
+      {/* Pickers */}
+      <GridPicker open={!!picker&&picker.panel==="ing"}   onClose={()=>setPicker(null)} onPick={handleIng}
+        title="Pick Ingredient" step="Step 1 of 2" items={ALL_INGREDIENTS} cols={3} isMeasure={false}/>
+      <GridPicker open={!!picker&&picker.panel==="meas"}  onClose={()=>setPicker(null)} onPick={handleMeas}
+        title={picker?.ing||""} step="Step 2 of 2 — pick measure" items={ALL_MEASURES} cols={4} isMeasure={true}
+        onBack={()=>setPicker(p=>({...p,panel:"ing",ing:""}))}/>
+      <GridPicker open={!!picker&&picker.panel==="single"} onClose={()=>setPicker(null)} onPick={handleSingle}
+        title={picker?.type==="glass"?"Select Glass":picker?.type==="garnish"?"Select Garnish":"Select Special Prep"}
+        step="Select" items={picker?.type==="glass"?ALL_GLASSES:picker?.type==="garnish"?ALL_GARNISHES:ALL_EXTRAS}
+        cols={3} isMeasure={false}/>
+
+      {/* Header */}
+      <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:16}}>
+        <div>
+          <div style={{fontSize:22,fontFamily:"Georgia,serif",color:C.goldl,fontWeight:"bold"}}>Builder Exam</div>
+          <div style={{fontSize:10,color:C.dimmer,letterSpacing:2,textTransform:"uppercase"}}>Recipe {idx+1} of {total}</div>
+        </div>
+        <div style={{marginLeft:"auto",textAlign:"right"}}>
+          <div style={{fontSize:34,fontWeight:"bold",color:tc,fontVariantNumeric:"tabular-nums",lineHeight:1}}>{elapsed}s</div>
+          {prevBest!=null&&<div style={{fontSize:11,color:C.dimmer}}>Best: {prevBest}s</div>}
+        </div>
+      </div>
+
+      <div style={{...C.card,marginBottom:16,border:"1px solid rgba(201,168,76,0.15)"}}>
+        <div style={{fontSize:10,color:C.muted,letterSpacing:3,textTransform:"uppercase",marginBottom:2}}>Build this cocktail:</div>
+        <div style={{fontSize:22,fontFamily:"Georgia,serif",color:C.goldl,fontWeight:"bold"}}>{recipe.name}</div>
+        <div style={{fontSize:11,color:C.dimmer,marginTop:2}}>Click a row to pick ingredient → then measure · Fill glass, method, garnish, extras · Submit</div>
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"1fr 320px",gap:20,alignItems:"start"}}>
+        {/* Rows */}
+        <div>
+          <div style={{fontSize:9,color:C.gold,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>Ingredients &amp; Measures ({ROWS} slots)</div>
+          <div style={{display:"grid",gridTemplateColumns:"20px 1fr 110px 20px",gap:6,fontSize:9,color:C.dimmer,textTransform:"uppercase",letterSpacing:1,marginBottom:6,paddingLeft:2}}>
+            <span/><span>Ingredient</span><span style={{textAlign:"right"}}>Measure</span><span/>
+          </div>
+
+          {rows.map((row,i)=>{
+            let st="";
+            if(subm&&row.ingredient){
+              const mi=recipe.ingredients.find(ri=>ri.name===row.ingredient);
+              st=mi&&row.measure===mi.measure?"ok":mi?"partial":"bad";
+            }
+            const filled=row.ingredient||row.measure;
+            return (
+              <div key={i} onClick={()=>openRow(i)} style={{
+                display:"grid",gridTemplateColumns:"20px 1fr 110px 20px",gap:8,alignItems:"center",
+                padding:"8px 10px",marginBottom:5,borderRadius:8,cursor:subm?"default":"pointer",
+                background:subm?(st==="ok"?"rgba(126,203,114,0.07)":st==="partial"?"rgba(212,168,64,0.07)":st==="bad"?"rgba(224,112,112,0.06)":"rgba(255,255,255,0.01)"):filled?"rgba(201,168,76,0.05)":"rgba(255,255,255,0.02)",
+                border:`1px solid ${subm?(st==="ok"?"rgba(126,203,114,0.3)":st==="partial"?"rgba(212,168,64,0.3)":st==="bad"?"rgba(224,112,112,0.2)":"rgba(255,255,255,0.04)"):filled?"rgba(201,168,76,0.2)":"rgba(255,255,255,0.06)"}`,
+              }}>
+                <span style={{fontSize:10,color:C.dimmer,fontWeight:"bold",textAlign:"center"}}>{i+1}</span>
+                <span style={{fontSize:14,color:row.ingredient?"#F0E8D0":C.dimmer,fontWeight:row.ingredient?"bold":"normal",fontStyle:row.ingredient?"normal":"italic"}}>
+                  {row.ingredient||"click to pick…"}
+                </span>
+                <span style={{fontSize:14,color:row.measure?C.gold:C.dimmer,fontWeight:row.measure?"bold":"normal",textAlign:"right"}}>
+                  {row.measure||"—"}
+                </span>
+                <span style={{fontSize:13,fontWeight:"bold",color:st==="ok"?"#7ECB72":st==="partial"?"#D4A840":st==="bad"?"#E07070":"transparent",textAlign:"center"}}>
+                  {st==="ok"?"✓":st==="partial"?"~":st==="bad"?"✗":"·"}
+                </span>
+              </div>
+            );
+          })}
+
+          {subm&&(
+            <div style={{padding:"10px 12px",borderRadius:8,background:"rgba(126,203,114,0.05)",border:"1px solid rgba(126,203,114,0.15)",marginTop:8}}>
+              <div style={{fontSize:9,color:C.dimmer,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>Answer Key</div>
+              {recipe.ingredients.map((ing,i)=>(
+                <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
+                  <span style={{fontSize:13,color:"#7ECB72",fontWeight:"bold"}}>{ing.name}</span>
+                  <span style={{fontSize:13,color:C.gold,fontWeight:"bold"}}>{ing.measure}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Right panel */}
+        <div>
+          {/* Glass */}
+          <div style={{fontSize:9,color:C.gold,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>Glass</div>
+          <TapRow value={glass} placeholder="click to select glass…" onClick={()=>openSingle("glass")} subm={subm} correct={subm?glass===recipe.glass:null} answer={recipe.glass}/>
+
+          {/* Method */}
+          <div style={{fontSize:9,color:C.gold,letterSpacing:2,textTransform:"uppercase",marginBottom:6,marginTop:14}}>Method</div>
+          <div style={{display:"flex",gap:8,marginBottom:14}}>
+            {["shake","stir","build"].map(m=>{
+              const picked=method===m, right=m===recipe.method;
+              let bg="rgba(255,255,255,0.03)",border="rgba(255,255,255,0.07)",color=C.dimmer;
+              if(!subm&&picked){bg=MC[m].bg;border=MC[m].border;color=MC[m].color;}
+              else if(subm&&right){bg="rgba(126,203,114,0.12)";border="#7ECB72";color="#7ECB72";}
+              else if(subm&&picked){bg="rgba(224,112,112,0.1)";border="#E07070";color="#E07070";}
+              return<button key={m} onClick={()=>!subm&&setMethod(m)} style={{flex:1,padding:"10px 4px",borderRadius:8,fontSize:13,fontWeight:"bold",cursor:subm?"default":"pointer",background:bg,border:`1px solid ${border}`,color}}>{MC[m].icon} {m}</button>;
+            })}
+          </div>
+
+          {/* Garnish */}
+          <div style={{fontSize:9,color:C.gold,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>Garnish</div>
+          <TapRow value={garnish} placeholder="click to select garnish…" onClick={()=>openSingle("garnish")} subm={subm} correct={subm?garnish===recipe.garnish:null} answer={recipe.garnish}/>
+
+          {/* Extras */}
+          <div style={{fontSize:9,color:C.gold,letterSpacing:2,textTransform:"uppercase",marginBottom:6,marginTop:14}}>Special Prep / Rim / Ice</div>
+          <TapRow value={extras} placeholder="click to select…" onClick={()=>openSingle("extras")} subm={subm} correct={subm?extras===recipe.extras:null} answer={recipe.extras}/>
+
+          {/* Submit / Score */}
+          <div style={{marginTop:16}}>
+            {!subm ? (
+              <button onClick={submit} style={{...btn("#D4A840","lg"),width:"100%",opacity:(rows.some(r=>r.ingredient)||glass||method)?1:0.4}}>⏱ Submit Answer</button>
+            ) : score && <ScoreCard sd={score} prevBest={prevBest}/>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TapRow({value,placeholder,onClick,subm,correct,answer}) {
+  const border=subm?(correct?"rgba(126,203,114,0.35)":"rgba(224,112,112,0.3)"):value?"rgba(201,168,76,0.25)":"rgba(255,255,255,0.07)";
+  const bg=subm?(correct?"rgba(126,203,114,0.08)":"rgba(224,112,112,0.07)"):value?"rgba(201,168,76,0.05)":"rgba(255,255,255,0.02)";
+  return (
+    <div style={{marginBottom:4}}>
+      <button onClick={onClick} disabled={subm} style={{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",padding:"10px 13px",borderRadius:8,cursor:subm?"default":"pointer",background:bg,border:`1px solid ${border}`,textAlign:"left"}}>
+        {value
+          ? <span style={{fontSize:13,color:subm?(correct?"#7ECB72":"#E07070"):"#F0E8D0",fontWeight:"bold"}}>{value}</span>
+          : <span style={{fontSize:12,color:C.dimmer,fontStyle:"italic"}}>{placeholder}</span>
+        }
+        {subm&&<span style={{fontSize:14,fontWeight:"bold",color:correct?"#7ECB72":"#E07070"}}>{correct?"✓":"✗"}</span>}
+      </button>
+      {subm&&!correct&&<div style={{fontSize:11,color:"#7ECB72",paddingLeft:4,marginTop:2}}>✓ {answer}</div>}
+    </div>
+  );
+}
+
+function ScoreCard({sd,prevBest}) {
+  const newBest=prevBest===null||sd.secs<prevBest;
+  const pills=[
+    {l:"Ingredients",v:`${sd.ingPts}/${sd.ingTotal}`,c:sd.ingPts===sd.ingTotal?"#7ECB72":"#C9A84C"},
+    {l:"Glass",v:sd.glassPts?"✓":"✗",c:sd.glassPts?"#7ECB72":"#E07070"},
+    {l:"Method",v:sd.methodPts?"✓":"✗",c:sd.methodPts?"#7ECB72":"#E07070"},
+    {l:"Garnish",v:sd.garnishPts?"✓":"✗",c:sd.garnishPts?"#7ECB72":"#E07070"},
+    {l:"Extras",v:sd.extrasPts?"✓":"✗",c:sd.extrasPts?"#7ECB72":"#E07070"},
+    {l:"Accuracy",v:`${sd.pct}%`,c:sd.pct===100?"#7ECB72":sd.pct>60?"#C9A84C":"#E07070"},
+    {l:newBest?"🏆 Best!":"Time",v:`${sd.secs}s`,c:newBest?"#E8C97A":sd.secs<30?"#7ECB72":sd.secs<60?"#C9A84C":"#E07070"},
+    {l:"Speed Bonus",v:`+${sd.timeBonus}`,c:"#D4A840"},
+    {l:"Score",v:sd.score,c:"#E8C97A"},
+  ];
+  return (
+    <div style={{padding:12,background:"rgba(201,168,76,0.05)",border:"1px solid rgba(201,168,76,0.2)",borderRadius:9}}>
+      <div style={{fontSize:9,color:C.muted,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>Round Score</div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:7}}>
+        {pills.map(p=>(
+          <div key={p.l} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:7,padding:"8px 4px",textAlign:"center"}}>
+            <div style={{fontSize:p.l==="Score"?22:15,fontWeight:"bold",color:p.c}}>{p.v}</div>
+            <div style={{fontSize:9,color:C.muted,textTransform:"uppercase",letterSpacing:1,marginTop:2}}>{p.l}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── QUIZ ─────────────────────────────────────────────────────────────────────
+function QuizScreen({quizState,answerQuiz,setScreen}) {
+  const [chosen,setChosen]=useState(null);
+  const {qs,idx,score}=quizState;
+  const q=qs[idx];
+  const mc=MC[q.r.method];
+  useEffect(()=>setChosen(null),[idx]);
+  const pick=ans=>{if(chosen)return;setChosen(ans);setTimeout(()=>answerQuiz(ans),900);};
+
+  return (
+    <div style={{...C.panel,maxWidth:680}}>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
+        <div>
+          <div style={{fontSize:22,fontFamily:"Georgia,serif",color:C.goldl,fontWeight:"bold"}}>MCQ Exam</div>
+          <div style={{fontSize:10,color:C.dimmer,letterSpacing:2,textTransform:"uppercase"}}>Question {idx+1} of {qs.length}</div>
+        </div>
+        <div style={{marginLeft:"auto",fontSize:20,fontWeight:"bold",color:"#7ECB72"}}>{score} ✓</div>
+      </div>
+
+      <div style={{height:4,background:"rgba(255,255,255,0.07)",borderRadius:2,marginBottom:20,overflow:"hidden"}}>
+        <div style={{height:"100%",width:`${(idx/qs.length)*100}%`,background:"#90A8E8",borderRadius:2}}/>
+      </div>
+
+      <span style={{fontSize:11,padding:"4px 10px",borderRadius:4,fontWeight:"bold",background:mc.bg,color:mc.color,border:`1px solid ${mc.border}`}}>{q.r.name}</span>
+      <div style={{fontSize:20,fontFamily:"Georgia,serif",color:C.goldl,margin:"16px 0 20px",lineHeight:1.4,fontWeight:"bold"}}>{q.q}</div>
+
+      {q.opts.map((opt,i)=>{
+        let bg="rgba(255,255,255,0.04)",border="rgba(255,255,255,0.1)",color="#F0E8D0";
+        if(chosen){if(opt===q.ans){bg="rgba(126,203,114,0.15)";border="#7ECB72";color="#7ECB72";}else if(opt===chosen){bg="rgba(224,112,112,0.15)";border="#E07070";color="#E07070";}}
+        return <button key={i} onClick={()=>pick(opt)} style={{width:"100%",textAlign:"left",padding:"13px 18px",marginBottom:9,borderRadius:10,background:bg,border:`1px solid ${border}`,color,fontSize:15,fontWeight:"bold",cursor:chosen?"default":"pointer"}}>{opt}</button>;
+      })}
+
+      {chosen&&(
+        <div style={{marginTop:8}}>
+          {/* Left/Right comparison */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+            <div style={{padding:"12px 14px",borderRadius:8,background:chosen===q.ans?C.t.correctBg:C.t.wrongBg,border:`1px solid ${chosen===q.ans?C.t.correctBorder:C.t.wrongBorder}`}}>
+              <div style={{fontSize:9,color:C.t.textMuted,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>Your Answer</div>
+              <div style={{fontSize:15,fontWeight:"bold",color:chosen===q.ans?C.t.correctText:C.t.wrongText}}>{chosen===q.ans?"✓":""} {chosen}</div>
+            </div>
+            <div style={{padding:"12px 14px",borderRadius:8,background:C.t.correctBg,border:`1px solid ${C.t.correctBorder}`}}>
+              <div style={{fontSize:9,color:C.t.textMuted,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>Correct Answer</div>
+              <div style={{fontSize:15,fontWeight:"bold",color:C.t.correctText}}>✓ {q.ans}</div>
+            </div>
+          </div>
+          {/* Score strip */}
+          <div style={{padding:"10px 14px",borderRadius:8,background:C.t.scoreBg,border:`1px solid ${C.t.scoreBorder}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <span style={{fontSize:13,color:C.t.text}}>{q.r.ingredients.map(i=>`${i.name} (${i.measure})`).join(" · ")}</span>
+            <span style={{fontSize:15,fontWeight:"bold",color:chosen===q.ans?C.t.correctText:C.t.wrongText,marginLeft:12}}>{chosen===q.ans?"✓ Correct!":"✗ Incorrect"}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── RESULT ───────────────────────────────────────────────────────────────────
+function ResultScreen({result,setScreen}) {
+  if(result.mode==="builder") {
+    const {results,totalScore}=result;
+    const avgPct=Math.round(results.reduce((s,r)=>s+r.pct,0)/results.length);
+    const avgT=Math.round(results.reduce((s,r)=>s+r.secs,0)/results.length);
+    const gc=avgPct>=90?"#E8C97A":avgPct>=70?"#7ECB72":avgPct>=50?"#C9A84C":"#F08080";
+    const gl=avgPct>=90?"Master Bartender 🏆":avgPct>=70?"Getting There 🍸":avgPct>=50?"Keep Practising 🥄":"Back to Flashcards 📚";
+    return (
+      <div style={C.panel}>
+        <div style={{textAlign:"center",marginBottom:24}}>
+          <div style={{fontSize:52,fontFamily:"Georgia,serif",color:C.goldl,fontWeight:"bold"}}>{totalScore} pts</div>
+          <div style={{fontSize:18,color:gc,fontWeight:"bold",marginBottom:6}}>{gl}</div>
+          <div style={{display:"flex",justifyContent:"center",gap:24}}>
+            <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:"bold",color:C.gold}}>{avgPct}%</div><div style={{fontSize:10,color:C.dimmer}}>avg accuracy</div></div>
+            <div style={{textAlign:"center"}}><div style={{fontSize:22,fontWeight:"bold",color:avgT<30?"#7ECB72":avgT<60?"#C9A84C":"#E07070"}}>{avgT}s</div><div style={{fontSize:10,color:C.dimmer}}>avg time</div></div>
+          </div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:20}}>
+          {results.map((r,i)=>(
+            <div key={i} style={C.card}>
+              <div style={{fontSize:14,color:C.goldl,fontWeight:"bold",marginBottom:6}}>{r.recipe.name}</div>
+              <div style={{display:"flex",gap:8,marginBottom:4}}>
+                <span style={{fontSize:12,fontWeight:"bold",color:r.pct===100?"#7ECB72":r.pct>60?"#C9A84C":"#E07070"}}>{r.pct}%</span>
+                <span style={{fontSize:12,color:C.muted}}>·</span>
+                <span style={{fontSize:12,fontWeight:"bold",color:r.secs<30?"#7ECB72":r.secs<60?"#C9A84C":"#E07070"}}>{r.secs}s</span>
+                <span style={{fontSize:12,color:C.muted}}>·</span>
+                <span style={{fontSize:12,color:"#D4A840"}}>+{r.timeBonus}</span>
+              </div>
+              <div style={{fontSize:16,color:C.gold,fontWeight:"bold"}}>{r.score} pts</div>
+            </div>
+          ))}
+        </div>
+        <div style={{display:"flex",gap:10}}>
+          <button style={{...btn(C.gold)}} onClick={()=>setScreen("home")}>← Home</button>
+          <button style={{...btn(C.muted)}} onClick={()=>setScreen("flashcard")}>Flashcards</button>
+        </div>
+      </div>
+    );
+  }
+
+  const {answers,score,total}=result;
+  const pct=Math.round((score/total)*100);
+  const gc=pct>=90?"#E8C97A":pct>=70?"#7ECB72":pct>=50?"#C9A84C":"#F08080";
+  const gl=pct>=90?"Master Bartender 🏆":pct>=70?"Getting There 🍸":pct>=50?"Keep Practising 🥄":"Back to Flashcards 📚";
+  return (
+    <div style={{...C.panel,maxWidth:680}}>
+      <div style={{textAlign:"center",marginBottom:20}}>
+        <div style={{fontSize:52,fontFamily:"Georgia,serif",color:C.goldl,fontWeight:"bold"}}>{pct}%</div>
+        <div style={{fontSize:16,color:gc,fontWeight:"bold",marginBottom:3}}>{gl}</div>
+        <div style={{fontSize:13,color:C.muted}}>{score} correct of {total}</div>
+      </div>
+      {answers.map((a,i)=>(
+        <div key={i} style={{padding:"9px 12px",marginBottom:6,borderRadius:8,background:a.ok?"rgba(126,203,114,0.06)":"rgba(224,112,112,0.06)",border:`1px solid ${a.ok?"rgba(126,203,114,0.18)":"rgba(224,112,112,0.18)"}`}}>
+          <div style={{fontSize:13,color:a.ok?"#7ECB72":"#F08080",fontWeight:"bold",marginBottom:1}}>{a.ok?"✓":"✗"} {a.q.r.name}</div>
+          <div style={{fontSize:11,color:C.muted}}>{a.q.q}{!a.ok&&<span style={{color:C.gold,marginLeft:8}}>→ {a.q.ans}</span>}</div>
+        </div>
+      ))}
+      <div style={{display:"flex",gap:10,marginTop:16}}>
+        <button style={{...btn(C.gold)}} onClick={()=>setScreen("home")}>← Home</button>
+        <button style={{...btn(C.muted)}} onClick={()=>setScreen("flashcard")}>Practice More</button>
+      </div>
+    </div>
+  );
+}
+
+// ─── MANAGE ───────────────────────────────────────────────────────────────────
+function ManageScreen({recipes,delRecipe,addForm,setAddForm,saveNew,progress,mastery}) {
+  const blank={name:"",method:"shake",glass:"",ingredients:[{name:"",measure:""}],garnish:"",extras:"None",notes:""};
+  const addI=()=>setAddForm(f=>({...f,ingredients:[...f.ingredients,{name:"",measure:""}]}));
+  const remI=i=>setAddForm(f=>({...f,ingredients:f.ingredients.filter((_,j)=>j!==i)}));
+  const updI=(i,k,v)=>setAddForm(f=>{const n=[...f.ingredients];n[i]={...n[i],[k]:v};return{...f,ingredients:n};});
+  const inp={width:"100%",padding:"8px 12px",borderRadius:7,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",color:"#F0E8D0",fontSize:13,outline:"none",fontFamily:"Arial,sans-serif"};
+
+  return (
+    <div style={C.panel}>
+      <div style={{fontSize:22,fontFamily:"Georgia,serif",color:C.goldl,fontWeight:"bold",marginBottom:3}}>Manage Recipes</div>
+      <div style={{fontSize:10,color:C.dimmer,letterSpacing:3,textTransform:"uppercase",marginBottom:20}}>Add, edit or delete</div>
+      <button style={{...btn(C.gold),marginBottom:16}} onClick={()=>setAddForm(blank)}>+ Add New Recipe</button>
+
+      {addForm&&(
+        <div style={{...C.card,border:"1px solid rgba(201,168,76,0.2)",marginBottom:20}}>
+          <div style={{fontSize:13,color:C.gold,fontWeight:"bold",marginBottom:14}}>New Recipe</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+            {[["Name","name"],["Glass","glass"],["Garnish","garnish"],["Notes","notes"]].map(([l,k])=>(
+              <div key={k}>
+                <div style={{fontSize:9,color:C.muted,marginBottom:3,textTransform:"uppercase",letterSpacing:1}}>{l}</div>
+                <input style={inp} value={addForm[k]||""} onChange={e=>setAddForm(f=>({...f,[k]:e.target.value}))} placeholder={l}/>
+              </div>
+            ))}
+          </div>
+          <div style={{marginBottom:12}}>
+            <div style={{fontSize:9,color:C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:1}}>Method</div>
+            <div style={{display:"flex",gap:8}}>
+              {["shake","stir","build"].map(m=>(
+                <button key={m} onClick={()=>setAddForm(f=>({...f,method:m}))} style={{flex:1,...btn(addForm.method===m?MC[m].color:"#3a2810")}}>
+                  {MC[m].icon} {m}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div style={{marginBottom:12}}>
+            <div style={{fontSize:9,color:C.muted,marginBottom:6,textTransform:"uppercase",letterSpacing:1}}>Ingredients</div>
+            {addForm.ingredients.map((ing,i)=>(
+              <div key={i} style={{display:"flex",gap:8,marginBottom:6}}>
+                <input style={{...inp,flex:2}} value={ing.name} onChange={e=>updI(i,"name",e.target.value)} placeholder="Ingredient"/>
+                <input style={{...inp,flex:1}} value={ing.measure} onChange={e=>updI(i,"measure",e.target.value)} placeholder="25ml"/>
+                {addForm.ingredients.length>1&&<button onClick={()=>remI(i)} style={{background:"none",border:"none",color:"#E07070",fontSize:18,cursor:"pointer"}}>×</button>}
+              </div>
+            ))}
+            <button onClick={addI} style={{fontSize:12,color:C.gold,background:"none",border:"none",cursor:"pointer"}}>+ Add ingredient</button>
+          </div>
+          <div style={{display:"flex",gap:10}}>
+            <button style={{...btn(C.dimmer)}} onClick={()=>setAddForm(null)}>Cancel</button>
+            <button style={{...btn(C.gold)}} onClick={saveNew}>Save Recipe</button>
+          </div>
+        </div>
+      )}
+
+      <table style={{width:"100%",borderCollapse:"collapse"}}>
+        <thead>
+          <tr>{["Recipe","Method","Ingredients","Mastery","Best Time",""].map(h=>(
+            <th key={h} style={{fontSize:10,color:C.dimmer,textTransform:"uppercase",letterSpacing:2,padding:"6px 10px",borderBottom:"1px solid rgba(201,168,76,0.2)",textAlign:"left"}}>{h}</th>
+          ))}</tr>
+        </thead>
+        <tbody>
+          {recipes.map(r=>{
+            const m=mastery(r.id), p=progress[r.id]||{}, mc=MC[r.method];
+            return(
+              <tr key={r.id} style={{borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
+                <td style={{padding:"8px 10px",fontSize:13,color:C.goldl,fontWeight:"bold"}}>{r.name}</td>
+                <td style={{padding:"8px 10px"}}><span style={{fontSize:10,padding:"3px 8px",borderRadius:4,fontWeight:"bold",background:mc.bg,color:mc.color,border:`1px solid ${mc.border}`}}>{r.method}</span></td>
+                <td style={{padding:"8px 10px",fontSize:12,color:C.muted}}>{r.ingredients.length} items</td>
+                <td style={{padding:"8px 10px",fontSize:13,fontWeight:"bold",color:m>70?"#7ECB72":m>40?"#C9A84C":"#E07070"}}>{m}%</td>
+                <td style={{padding:"8px 10px",fontSize:13,color:"#D4A840"}}>{p.bestSecs!=null?`${p.bestSecs}s`:"—"}</td>
+                <td style={{padding:"8px 10px"}}><button style={{...btn("#E07070","sm")}} onClick={()=>delRecipe(r.id)}>Delete</button></td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function Toast({msg}) {
+  return <div style={{position:"fixed",top:20,left:"50%",transform:"translateX(-50%)",background:C.t.cardBg,border:`1px solid ${C.t.accent}`,color:C.t.accentLight,padding:"10px 22px",borderRadius:20,fontSize:13,fontWeight:"bold",zIndex:999,pointerEvents:"none"}}>{msg}</div>;
+}
+
+// ─── BUILDER SELECT SCREEN ─────────────────────────────────────────────────────
+function BuilderSelectScreen({recipes,progress,mastery,launchBuilder,setScreen}) {
+  const [search, setSearch] = useState("");
+  const [localSel, setLocalSel] = useState([]);
+  const byM = {
+    shake: recipes.filter(r=>r.method==="shake"),
+    stir:  recipes.filter(r=>r.method==="stir"),
+    build: recipes.filter(r=>r.method==="build"),
+  };
+  const q = search.toLowerCase();
+  const filtered = r => !q || r.name.toLowerCase().includes(q);
+  const toggle = id => setLocalSel(s=>s.includes(id)?s.filter(x=>x!==id):[...s,id]);
+
+  return (
+    <div style={{...C.panel}}>
+      <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:18}}>
+        <div>
+          <div style={{fontSize:22,fontFamily:"Georgia,serif",color:C.goldl,fontWeight:"bold"}}>Builder Exam</div>
+          <div style={{fontSize:10,color:C.dimmer,letterSpacing:2,textTransform:"uppercase"}}>Select drinks to practice</div>
+        </div>
+        <div style={{marginLeft:"auto",display:"flex",gap:10}}>
+          <button style={{...btn(C.t.textMuted)}} onClick={()=>setScreen("home")}>← Back</button>
+          <button onClick={()=>{ if(!localSel.length){launchBuilder(recipes.map(r=>r.id));} else launchBuilder(localSel); }}
+            style={{...btn(C.t.accent,"lg")}}
+          >⏱ Start ({localSel.length||"All"} recipes)</button>
+        </div>
+      </div>
+
+      {/* Search */}
+      <input
+        value={search}
+        onChange={e=>setSearch(e.target.value)}
+        placeholder="Search cocktails…"
+        style={{width:"100%",padding:"10px 16px",borderRadius:8,border:`1px solid ${C.t.inputBorder}`,background:C.t.inputBg,color:C.t.text,fontSize:14,outline:"none",marginBottom:20}}
+      />
+
+      <div style={{display:"flex",gap:8,marginBottom:16}}>
+        <button style={{...btn(C.t.accent,"sm")}} onClick={()=>setLocalSel(recipes.map(r=>r.id))}>Select All</button>
+        <button style={{...btn(C.t.textMuted,"sm")}} onClick={()=>setLocalSel([])}>Clear</button>
+        <span style={{fontSize:11,color:C.t.textMuted,alignSelf:"center",marginLeft:"auto"}}>{localSel.length} selected</span>
+      </div>
+
+      {["shake","stir","build"].map(method=>{
+        const vis = byM[method].filter(filtered);
+        if(!vis.length) return null;
+        return (
+          <div key={method} style={{marginBottom:20}}>
+            <div style={{fontSize:10,color:MC[method].color,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>{MC[method].icon} {method}</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:8}}>
+              {vis.map(r=>{
+                const s=localSel.includes(r.id), m=mastery(r.id), p=progress[r.id];
+                return (
+                  <button key={r.id} onClick={()=>toggle(r.id)} style={{
+                    padding:"12px 10px",borderRadius:9,cursor:"pointer",textAlign:"left",
+                    background:s?MC[method].bg:C.t.btnOptBg,
+                    border:`2px solid ${s?MC[method].border:C.t.btnOptBorder}`,
+                  }}>
+                    <div style={{fontSize:13,fontWeight:"bold",color:s?MC[method].color:C.t.text,marginBottom:4}}>{r.name}</div>
+                    <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                      <div style={{height:3,flex:1,background:C.t.cardBorder,borderRadius:2,overflow:"hidden"}}>
+                        <div style={{height:"100%",width:`${m}%`,background:m>70?"#7ECB72":m>40?"#C9A84C":"#E07070",borderRadius:2}}/>
+                      </div>
+                      <span style={{fontSize:10,color:C.t.textMuted,minWidth:28}}>{m}%</span>
+                    </div>
+                    {p?.bestSecs!=null&&<div style={{fontSize:10,color:"#D4A840",marginTop:2}}>⏱ best {p.bestSecs}s</div>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+  </script>
+</body>
+</html>
